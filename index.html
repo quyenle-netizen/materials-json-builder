@@ -2,43 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
   <title>Lesson JSON Generator</title>
 
   <style>
-    * { box-sizing: border-box; }
-
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 24px;
       background: #f5f5f5;
-      margin: 0;
+    }
+
+    h2 {
+      margin-bottom: 16px;
     }
 
     .container {
-      max-width: 1100px;
-      margin: auto;
       background: white;
-      padding: 24px;
-      border-radius: 12px;
+      padding: 20px;
+      border-radius: 10px;
     }
 
     .lesson {
       border: 1px solid #ddd;
       padding: 16px;
       margin-bottom: 16px;
-      border-radius: 10px;
-      background: #fafafa;
+      border-radius: 8px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
 
-    .full-width { grid-column: 1 / -1; }
+    .full-width {
+      grid-column: span 2;
+    }
 
     label {
       font-size: 13px;
@@ -47,39 +45,27 @@
 
     input, select, textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    .skills-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      padding: 6px;
+      margin-top: 4px;
     }
 
     button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 10px;
       cursor: pointer;
-      font-weight: bold;
     }
 
-    .primary { background: #111827; color: white; }
-    .danger { background: #ef4444; color: white; }
-    .secondary { background: #e5e7eb; }
+    .danger {
+      background: red;
+      color: white;
+    }
 
     pre {
-      background: #111827;
-      color: #00ff99;
-      padding: 16px;
-      border-radius: 10px;
+      background: #111;
+      color: #0f0;
+      padding: 12px;
       margin-top: 20px;
-    }
-
-    .error {
-      border: 2px solid red !important;
+      overflow-x: auto;
     }
   </style>
 </head>
@@ -92,28 +78,28 @@
 
   <!-- SECTION -->
   <div class="grid">
-
     <div>
       <label>Section Name *</label>
-      <input id="sectionName" />
+      <input id="sectionName" required />
     </div>
+
+    <!-- ❌ ĐÃ XOÁ THUMBNAIL -->
 
     <div>
       <label>Section Duration (minutes) *</label>
-      <input id="sectionDuration" type="number" min="1" />
+      <input id="sectionDuration" type="number" required />
     </div>
-
   </div>
 
   <hr />
 
   <h3>Lessons</h3>
 
-  <button class="secondary" onclick="addLesson()">+ Add Lesson</button>
-
   <div id="lessonsContainer"></div>
 
-  <button class="primary" onclick="generateJSON()">Generate JSON</button>
+  <button onclick="addLesson()">+ Add Lesson</button>
+  <br /><br />
+  <button onclick="generateJSON()">Generate JSON</button>
 
   <pre id="output"></pre>
 
@@ -127,7 +113,7 @@ function addLesson() {
 
   const lessonHTML = `
     <div class="lesson" id="lesson-${lessonIndex}">
-
+      
       <div style="display:flex;justify-content:space-between;">
         <h3>Lesson ${lessonIndex}</h3>
         <button class="danger" onclick="removeLesson(${lessonIndex})">Remove</button>
@@ -137,8 +123,8 @@ function addLesson() {
 
         <div>
           <label>Type *</label>
-          <select class="lesson-type" onchange="toggleLessonFields(${lessonIndex})">
-            <option value="">Select</option>
+          <select class="lesson-type" onchange="toggleLessonFields(${lessonIndex})" required>
+            <option value="">Select Type</option>
             <option value="VIDEO">VIDEO</option>
             <option value="QUIZ">QUIZ</option>
           </select>
@@ -146,13 +132,13 @@ function addLesson() {
 
         <div>
           <label>Lesson Name *</label>
-          <input class="lesson-name" />
+          <input class="lesson-name" required />
         </div>
 
       </div>
 
       <!-- VIDEO -->
-      <div id="video-fields-${lessonIndex}" style="display:none;">
+      <div class="video-fields" id="video-fields-${lessonIndex}" style="display:none;">
         <div class="grid">
 
           <div class="full-width">
@@ -161,19 +147,13 @@ function addLesson() {
           </div>
 
           <div>
-            <label>Duration *</label>
+            <label>Duration (minutes) *</label>
             <input class="lesson-duration" type="number" />
           </div>
 
-          <div class="full-width">
-            <label>Skills *</label>
-
-            <div class="skills-wrapper">
-              <label><input type="checkbox" class="lesson-skill" value="speaking"/> Speaking</label>
-              <label><input type="checkbox" class="lesson-skill" value="writing"/> Writing</label>
-              <label><input type="checkbox" class="lesson-skill" value="listening"/> Listening</label>
-              <label><input type="checkbox" class="lesson-skill" value="reading"/> Reading</label>
-            </div>
+          <div>
+            <label>Skill *</label>
+            <input class="lesson-skill" value="all" />
           </div>
 
           <div class="full-width">
@@ -185,9 +165,15 @@ function addLesson() {
       </div>
 
       <!-- QUIZ -->
-      <div id="quiz-fields-${lessonIndex}" style="display:none;">
-        <label>Question IDs *</label>
-        <input class="lesson-question-ids" />
+      <div class="quiz-fields" id="quiz-fields-${lessonIndex}" style="display:none;">
+        <div class="grid">
+
+          <div class="full-width">
+            <label>Question IDs *</label>
+            <input class="lesson-question-ids" />
+          </div>
+
+        </div>
       </div>
 
     </div>
@@ -212,78 +198,67 @@ function removeLesson(index) {
   document.getElementById(`lesson-${index}`)?.remove();
 }
 
-function validate(el, name) {
-  if (!el.value.trim()) {
+function validateField(value, name) {
+  if (!value || value.trim() === "") {
     alert(name + " is required");
-    el.classList.add("error");
     return false;
   }
   return true;
 }
 
 function generateJSON() {
-
-  const sectionName = document.getElementById("sectionName");
-  const sectionDuration = document.getElementById("sectionDuration");
-
-  if (!validate(sectionName, "Section Name")) return;
-  if (!validate(sectionDuration, "Section Duration")) return;
-
   const lessons = [];
 
-  document.querySelectorAll(".lesson").forEach(el => {
+  document.querySelectorAll(".lesson").forEach(lessonEl => {
+    const type = lessonEl.querySelector(".lesson-type").value;
+    const name = lessonEl.querySelector(".lesson-name").value;
 
-    const typeEl = el.querySelector(".lesson-type");
-    const nameEl = el.querySelector(".lesson-name");
+    if (!validateField(type, "Type")) return;
+    if (!validateField(name, "Name")) return;
 
-    if (!validate(typeEl, "Type")) return;
-    if (!validate(nameEl, "Name")) return;
+    const lesson = { name, type };
 
-    const lesson = {
-      name: nameEl.value.trim(),
-      type: typeEl.value
-    };
+    if (type === "VIDEO") {
+      const videoUrl = lessonEl.querySelector(".lesson-video-url").value;
+      const duration = lessonEl.querySelector(".lesson-duration").value;
+      const skill = lessonEl.querySelector(".lesson-skill").value;
 
-    if (lesson.type === "VIDEO") {
-      const url = el.querySelector(".lesson-video-url");
-      const duration = el.querySelector(".lesson-duration");
+      if (!validateField(videoUrl, "Video URL")) return;
+      if (!validateField(duration, "Duration")) return;
+      if (!validateField(skill, "Skill")) return;
 
-      if (!validate(url, "Video URL")) return;
-      if (!validate(duration, "Duration")) return;
+      lesson.videoUrl = videoUrl;
+      lesson.duration = Number(duration) * 60;
+      lesson.skill = skill;
 
-      const skills = Array.from(
-        el.querySelectorAll(".lesson-skill:checked")
-      ).map(i => i.value);
-
-      if (!skills.length) {
-        alert("Pick at least 1 skill");
-        return;
-      }
-
-      lesson.videoUrl = url.value.trim();
-      lesson.duration = Number(duration.value) * 60;
-      lesson.skills = skills;
-
-      const resources = el.querySelector(".lesson-resources").value
-        .split("\n").map(i => i.trim()).filter(Boolean);
+      const resources = lessonEl.querySelector(".lesson-resources").value
+        .split("\n")
+        .map(i => i.trim())
+        .filter(Boolean);
 
       if (resources.length) lesson.resources = resources;
     }
 
-    if (lesson.type === "QUIZ") {
-      const ids = el.querySelector(".lesson-question-ids");
+    if (type === "QUIZ") {
+      const ids = lessonEl.querySelector(".lesson-question-ids").value;
 
-      if (!validate(ids, "Question IDs")) return;
+      if (!validateField(ids, "Question IDs")) return;
 
-      lesson.questionId = ids.value.split(",").map(i => i.trim());
+      lesson.questionId = ids.split(",").map(i => i.trim());
     }
 
     lessons.push(lesson);
   });
 
+  const sectionName = document.getElementById("sectionName").value;
+  const duration = document.getElementById("sectionDuration").value;
+
+  if (!validateField(sectionName, "Section Name")) return;
+  if (!validateField(duration, "Section Duration")) return;
+
   const result = [{
-    name: sectionName.value.trim(),
-    duration: Number(sectionDuration.value) * 60,
+    name: sectionName,
+    duration: Number(duration) * 60,
     lessons
   }];
 
