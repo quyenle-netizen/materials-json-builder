@@ -83,8 +83,6 @@
       <input id="sectionName" required />
     </div>
 
-    <!-- ❌ ĐÃ XOÁ THUMBNAIL -->
-
     <div>
       <label>Section Duration (minutes) *</label>
       <input id="sectionDuration" type="number" required />
@@ -144,6 +142,12 @@ function addLesson() {
           <div class="full-width">
             <label>Video URL *</label>
             <input class="lesson-video-url" />
+          </div>
+
+          <!-- ✅ NEW FIELD -->
+          <div class="full-width">
+            <label>Thumbnail URL *</label>
+            <input class="lesson-thumbnail-url" />
           </div>
 
           <div>
@@ -220,14 +224,17 @@ function generateJSON() {
 
     if (type === "VIDEO") {
       const videoUrl = lessonEl.querySelector(".lesson-video-url").value;
+      const thumbnailUrl = lessonEl.querySelector(".lesson-thumbnail-url").value;
       const duration = lessonEl.querySelector(".lesson-duration").value;
       const skill = lessonEl.querySelector(".lesson-skill").value;
 
       if (!validateField(videoUrl, "Video URL")) return;
+      if (!validateField(thumbnailUrl, "Thumbnail URL")) return;
       if (!validateField(duration, "Duration")) return;
       if (!validateField(skill, "Skill")) return;
 
       lesson.videoUrl = videoUrl;
+      lesson.thumbnailUrl = thumbnailUrl; // ✅ NEW
       lesson.duration = Number(duration) * 60;
       lesson.skill = skill;
 
