@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Lesson JSON Generator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 24px;
+      background: #f5f5f5;
+      margin: 0;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+    }
+
+    .lesson {
+      border: 1px solid #ddd;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .skills-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .skill-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .skill-item input {
+      width: auto;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .primary {
+      background: #111827;
+      color: white;
+    }
+
+    .danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+    }
+
+    pre {
+      background: #111827;
+      color: #00ff99;
+      padding: 16px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    hr {
+      margin: 24px 0;
+    }
+
+    .error {
+      border: 2px solid red !important;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+
+      .container {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>Course Builder</h2>
+
+  <!-- SECTION -->
+  <div class="grid">
+
+    <div>
+      <label>Section Name *</label>
+      <input id="sectionName" />
+    </div>
+
+    <div>
+      <label>Thumbnail URL *</label>
+      <input id="thumbnailUrl" />
+    </div>
+
+    <div>
+      <label>Section Duration (minutes) *</label>
+      <input id="sectionDuration" type="number" min="1" />
+    </div>
+
+  </div>
+
+  <hr />
+
+  <div
+    style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:16px;
+      gap:12px;
+      flex-wrap:wrap;
+    "
+  >
+    <h3>Lessons</h3>
+
+    <button
+      class="secondary"
+      type="button"
+      onclick="addLesson()"
+    >
+      + Add Lesson
+    </button>
+  </div>
+
+  <div id="lessonsContainer"></div>
+
+  <button
+    class="primary"
+    onclick="generateJSON()"
+  >
+    Generate JSON
+  </button>
+
+  <pre id="output"></pre>
+
+</div>
+
+<script>
+  let lessonIndex = 0;
+
+  function addLesson() {
+    lessonIndex++;
+
+    const lessonHTML = `
+      <div class="lesson" id="lesson-${lessonIndex}">
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:16px;
+            gap:12px;
+            flex-wrap:wrap;
+          "
+        >
+          <h3>Lesson ${lessonIndex}</h3>
+
+          <button
+            type="button"
+            class="danger"
+            onclick="removeLesson(${lessonIndex})"
+          >
+            Remove
+          </button>
+        </div>
+
+        <div class="grid">
+
+          <!-- TYPE -->
+          <div>
+            <label>Type *</label>
+
+            <select
+              class="lesson-type"
+              onchange="toggleLessonFields(${lessonIndex})"
+            >
+              <option value="">Select Type</option>
+              <option value="VIDEO">VIDEO</option>
+              <option value="QUIZ">QUIZ</option>
+            </select>
+          </div>
+
+          <!-- NAME -->
+          <div>
+            <label>Lesson Name *</label>
+            <input class="lesson-name" />
+          </div>
+
+        </div>
+
+        <!-- VIDEO -->
+        <div
+          class="video-fields"
+          id="video-fields-${lessonIndex}"
+          style="display:none;"
+        >
+          <div class="grid">
+
+            <div class="full-width">
+              <label>Video URL *</label>
+              <input class="lesson-video-url" />
+            </div>
+
+            <div>
+              <label>Duration (minutes) *</label>
+              <input
+                class="lesson-duration"
+                type="number"
+                min="1"
+              />
+            </div>
+
+            <div class="full-width">
+              <label>Skills *</label>
+
+              <div class="skills-wrapper">
+
+                <label class="skill-item">
+                  <input
+                    type="checkbox"
+                    class="lesson-skill"
+                    value="speaking"
+                  />
+                  Speaking
+                </label>
+
+                <label class="skill-item">
+                  <input
+                    type="checkbox"
+                    class="lesson-skill"
+                    value="writing"
+                  />
+                  Writing
+                </label>
+
+                <label class="skill-item">
+                  <input
+                    type="checkbox"
+                    class="lesson-skill"
+                    value="listening"
+                  />
+                  Listening
+                </label>
+
+                <label class="skill-item">
+                  <input
+                    type="checkbox"
+                    class="lesson-skill"
+                    value="reading"
+                  />
+                  Reading
+                </label>
+
+              </div>
+            </div>
+
+            <div class="full-width">
+              <label>
+                Resources
+                (optional - 1 URL per line)
+              </label>
+
+              <textarea class="lesson-resources"></textarea>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- QUIZ -->
+        <div
+          class="quiz-fields"
+          id="quiz-fields-${lessonIndex}"
+          style="display:none;"
+        >
+          <div class="grid">
+
+            <div class="full-width">
+              <label>
+                Question IDs *
+                (comma separated)
+              </label>
+
+              <input class="lesson-question-ids" />
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    document
+      .getElementById("lessonsContainer")
+      .insertAdjacentHTML("beforeend", lessonHTML);
+
+    updateRemoveButtons();
+  }
+
+  function toggleLessonFields(index) {
+    const lesson =
+      document.getElementById(`lesson-${index}`);
+
+    const type =
+      lesson.querySelector(".lesson-type").value;
+
+    document.getElementById(
+      `video-fields-${index}`
+    ).style.display =
+      type === "VIDEO" ? "block" : "none";
+
+    document.getElementById(
+      `quiz-fields-${index}`
+    ).style.display =
+      type === "QUIZ" ? "block" : "none";
+  }
+
+  function removeLesson(index) {
+
+    const allLessons =
+      document.querySelectorAll(".lesson");
+
+    // prevent remove all lessons
+    if (allLessons.length <= 1) {
+      alert("At least 1 lesson is required");
+      return;
+    }
+
+    document
+      .getElementById(`lesson-${index}`)
+      ?.remove();
+
+    updateRemoveButtons();
+  }
+
+  function updateRemoveButtons() {
+
+    const allLessons =
+      document.querySelectorAll(".lesson");
+
+    allLessons.forEach(lesson => {
+
+      const button =
+        lesson.querySelector(".danger");
+
+      button.disabled =
+        allLessons.length <= 1;
+
+      button.style.opacity =
+        allLessons.length <= 1 ? "0.5" : "1";
+
+      button.style.cursor =
+        allLessons.length <= 1
+          ? "not-allowed"
+          : "pointer";
+    });
+  }
+
+  function clearErrors() {
+    document
+      .querySelectorAll(".error")
+      .forEach(el => el.classList.remove("error"));
+  }
+
+  function validateInput(element, fieldName) {
+
+    const value = element.value?.trim();
+
+    if (!value) {
+      element.classList.add("error");
+
+      alert(fieldName + " is required");
+
+      element.focus();
+
+      return false;
+    }
+
+    return true;
+  }
+
+  function generateJSON() {
+
+    clearErrors();
+
+    const lessons = [];
+
+    // SECTION VALIDATION
+
+    const sectionName =
+      document.getElementById("sectionName");
+
+    const thumbnailUrl =
+      document.getElementById("thumbnailUrl");
+
+    const sectionDuration =
+      document.getElementById("sectionDuration");
+
+    if (!validateInput(sectionName, "Section Name")) return;
+    if (!validateInput(thumbnailUrl, "Thumbnail URL")) return;
+    if (!validateInput(sectionDuration, "Section Duration")) return;
+
+    // LESSONS
+
+    const lessonElements =
+      document.querySelectorAll(".lesson");
+
+    for (const lessonEl of lessonElements) {
+
+      const typeEl =
+        lessonEl.querySelector(".lesson-type");
+
+      const nameEl =
+        lessonEl.querySelector(".lesson-name");
+
+      if (!validateInput(typeEl, "Lesson Type")) return;
+      if (!validateInput(nameEl, "Lesson Name")) return;
+
+      const type = typeEl.value;
+
+      const lesson = {
+        name: nameEl.value.trim(),
+        type
+      };
+
+      // VIDEO
+      if (type === "VIDEO") {
+
+        const videoUrlEl =
+          lessonEl.querySelector(".lesson-video-url");
+
+        const durationEl =
+          lessonEl.querySelector(".lesson-duration");
+
+        if (!validateInput(videoUrlEl, "Video URL")) return;
+        if (!validateInput(durationEl, "Lesson Duration")) return;
+
+        const selectedSkills =
+          Array.from(
+            lessonEl.querySelectorAll(
+              ".lesson-skill:checked"
+            )
+          ).map(skill => skill.value);
+
+        if (!selectedSkills.length) {
+          alert("Please select at least 1 skill");
+          return;
+        }
+
+        lesson.videoUrl =
+          videoUrlEl.value.trim();
+
+        // minute -> second
+        lesson.duration =
+          Number(durationEl.value) * 60;
+
+        lesson.skills =
+          selectedSkills;
+
+        const resources =
+          lessonEl
+            .querySelector(".lesson-resources")
+            .value
+            .split("\n")
+            .map(item => item.trim())
+            .filter(Boolean);
+
+        if (resources.length > 0) {
+          lesson.resources = resources;
+        }
+      }
+
+      // QUIZ
+      if (type === "QUIZ") {
+
+        const questionIdsEl =
+          lessonEl.querySelector(
+            ".lesson-question-ids"
+          );
+
+        if (
+          !validateInput(
+            questionIdsEl,
+            "Question IDs"
+          )
+        ) return;
+
+        lesson.questionId =
+          questionIdsEl.value
+            .split(",")
+            .map(item => item.trim())
+            .filter(Boolean);
+      }
+
+      lessons.push(lesson);
+    }
+
+    const result = [
+      {
+        name:
+          sectionName.value.trim(),
+
+        thumbnailUrl:
+          thumbnailUrl.value.trim(),
+
+        // minute -> second
+        duration:
+          Number(sectionDuration.value) * 60,
+
+        lessons
+      }
+    ];
+
+    document.getElementById("output").textContent =
+      JSON.stringify(result, null, 2);
+  }
+
+  // default first lesson
+  addLesson();
+</script>
+
+</body>
+</html>
