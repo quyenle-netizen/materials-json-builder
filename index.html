@@ -1,119 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Lesson JSON Generator</title>
+<meta charset="UTF-8" />
+<title>Course Builder</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      padding: 24px;
-      background: #f5f5f5;
-    }
+<style>
+body {
+  font-family: system-ui;
+  background: #f1f5f9;
+  padding: 20px;
+}
 
-    h2 {
-      margin-bottom: 16px;
-    }
+.container {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
 
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-    }
+.lesson {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
 
-    .lesson {
-      border: 1px solid #ddd;
-      padding: 16px;
-      margin-bottom: 16px;
-      border-radius: 8px;
-    }
+label {
+  font-weight: 600;
+  display: block;
+  margin-top: 10px;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+input, select, textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+}
 
-    .full-width {
-      grid-column: span 2;
-    }
+.skills {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
 
-    label {
-      font-size: 13px;
-      font-weight: bold;
-    }
+button {
+  margin-top: 10px;
+  margin-right: 10px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
 
-    input, select, textarea {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-    }
+.primary { background: #2563eb; color: white; }
+.danger { background: #ef4444; color: white; }
+.copy { background: #f59e0b; color: white; }
+.reset { background: #6b7280; color: white; }
 
-    .skills-wrapper {
-      display: flex;
-      gap: 12px;
-      margin-top: 6px;
-    }
+pre {
+  margin-top: 20px;
+  background: #020617;
+  color: #e2e8f0;
+  padding: 16px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+}
 
-    .skills-wrapper label {
-      font-weight: normal;
-    }
+.error {
+  border-color: red !important;
+  background: #fef2f2;
+}
 
-    .skills-wrapper input {
-      width: auto;
-      margin-right: 4px;
-    }
-
-    button {
-      padding: 8px 12px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-
-    .danger {
-      background: red;
-      color: white;
-    }
-
-    pre {
-      background: #111;
-      color: #0f0;
-      padding: 12px;
-      margin-top: 20px;
-      overflow-x: auto;
-    }
-  </style>
+.error-text {
+  color: red;
+  font-size: 12px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <h2>Course Builder</h2>
+<h2>Course Builder</h2>
 
-  <div class="grid">
-    <div>
-      <label>Section Name *</label>
-      <input id="sectionName" required />
-    </div>
+<label>Section Name *</label>
+<input id="sectionName">
+<div id="err_sectionName" class="error-text"></div>
 
-    <div>
-      <label>Section Duration (minutes) *</label>
-      <input id="sectionDuration" type="number" required />
-    </div>
-  </div>
+<label>Section Duration (minutes) *</label>
+<input id="sectionDuration" type="number">
+<div id="err_sectionDuration" class="error-text"></div>
 
-  <hr />
+<hr>
 
-  <h3>Lessons</h3>
+<h3>Lessons</h3>
+<div id="lessons"></div>
 
-  <div id="lessonsContainer"></div>
+<button onclick="addLesson()">+ Add Lesson</button>
+<br>
 
-  <button onclick="addLesson()">+ Add Lesson</button>
-  <br /><br />
-  <button onclick="generateJSON()">Generate JSON</button>
+<button class="primary" onclick="generate()">Generate JSON</button>
+<button class="copy" onclick="copyJSON()">Copy JSON</button>
+<button class="reset" onclick="resetAll()">Reset</button>
 
-  <pre id="output"></pre>
+<pre id="output">// JSON here</pre>
 
 </div>
 
@@ -123,175 +115,181 @@ let lessonIndex = 0;
 function addLesson() {
   lessonIndex++;
 
-  const lessonHTML = `
-    <div class="lesson" id="lesson-${lessonIndex}">
-      
-      <div style="display:flex;justify-content:space-between;">
-        <h3>Lesson ${lessonIndex}</h3>
-        <button class="danger" onclick="removeLesson(${lessonIndex})">Remove</button>
+  document.getElementById("lessons").innerHTML += `
+  <div class="lesson" id="lesson-${lessonIndex}">
+    <h3>Lesson ${lessonIndex}</h3>
+
+    <label>Type *</label>
+    <select class="type" onchange="toggle(${lessonIndex})">
+      <option value="">Select</option>
+      <option value="VIDEO">VIDEO</option>
+      <option value="QUIZ">QUIZ</option>
+    </select>
+
+    <label>Name *</label>
+    <input class="name">
+
+    <div id="video-${lessonIndex}" style="display:none">
+      <label>Video URL *</label>
+      <input class="video">
+
+      <label>Thumbnail URL *</label>
+      <input class="thumb">
+
+      <label>Duration *</label>
+      <input class="duration" type="number">
+
+      <label>Skills *</label>
+      <div class="skills">
+        <label><input type="checkbox" value="speaking" class="skill">Speaking</label>
+        <label><input type="checkbox" value="writing" class="skill">Writing</label>
+        <label><input type="checkbox" value="listening" class="skill">Listening</label>
+        <label><input type="checkbox" value="reading" class="skill">Reading</label>
       </div>
 
-      <div class="grid">
-
-        <div>
-          <label>Type *</label>
-          <select class="lesson-type" onchange="toggleLessonFields(${lessonIndex})" required>
-            <option value="">Select Type</option>
-            <option value="VIDEO">VIDEO</option>
-            <option value="QUIZ">QUIZ</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Lesson Name *</label>
-          <input class="lesson-name" required />
-        </div>
-
-      </div>
-
-      <!-- VIDEO -->
-      <div class="video-fields" id="video-fields-${lessonIndex}" style="display:none;">
-        <div class="grid">
-
-          <div class="full-width">
-            <label>Video URL *</label>
-            <input class="lesson-video-url" />
-          </div>
-
-          <div class="full-width">
-            <label>Thumbnail URL *</label>
-            <input class="lesson-thumbnail-url" />
-          </div>
-
-          <div>
-            <label>Duration (minutes) *</label>
-            <input class="lesson-duration" type="number" />
-          </div>
-
-          <!-- ✅ UPDATED SKILL -->
-          <div class="full-width">
-            <label>Skills *</label>
-            <div class="skills-wrapper">
-              <label><input type="checkbox" class="lesson-skill" value="speaking"> Speaking</label>
-              <label><input type="checkbox" class="lesson-skill" value="writing"> Writing</label>
-              <label><input type="checkbox" class="lesson-skill" value="listening"> Listening</label>
-              <label><input type="checkbox" class="lesson-skill" value="reading"> Reading</label>
-            </div>
-          </div>
-
-          <div class="full-width">
-            <label>Resources (optional)</label>
-            <textarea class="lesson-resources"></textarea>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- QUIZ -->
-      <div class="quiz-fields" id="quiz-fields-${lessonIndex}" style="display:none;">
-        <div class="grid">
-
-          <div class="full-width">
-            <label>Question IDs *</label>
-            <input class="lesson-question-ids" />
-          </div>
-
-        </div>
-      </div>
-
+      <label>Resources</label>
+      <textarea class="res"></textarea>
     </div>
-  `;
 
-  document.getElementById("lessonsContainer")
-    .insertAdjacentHTML("beforeend", lessonHTML);
+    <div id="quiz-${lessonIndex}" style="display:none">
+      <label>Question IDs *</label>
+      <input class="qids">
+    </div>
+
+    <button class="danger" onclick="removeLesson(${lessonIndex})">Remove</button>
+  </div>
+  `;
 }
 
-function toggleLessonFields(index) {
-  const lesson = document.getElementById(`lesson-${index}`);
-  const type = lesson.querySelector(".lesson-type").value;
+function toggle(i) {
+  const lesson = document.getElementById(`lesson-${i}`);
+  const type = lesson.querySelector(".type").value;
 
-  document.getElementById(`video-fields-${index}`).style.display =
+  document.getElementById(`video-${i}`).style.display =
     type === "VIDEO" ? "block" : "none";
 
-  document.getElementById(`quiz-fields-${index}`).style.display =
+  document.getElementById(`quiz-${i}`).style.display =
     type === "QUIZ" ? "block" : "none";
 }
 
-function removeLesson(index) {
-  document.getElementById(`lesson-${index}`)?.remove();
-}
-
-function validateField(value, name) {
-  if (!value || value.trim() === "") {
-    alert(name + " is required");
-    return false;
+function removeLesson(i) {
+  if (document.querySelectorAll(".lesson").length <= 1) {
+    alert("At least 1 lesson required");
+    return;
   }
-  return true;
+  document.getElementById(`lesson-${i}`).remove();
 }
 
-function generateJSON() {
+function clearErrors() {
+  document.querySelectorAll(".error").forEach(e => e.classList.remove("error"));
+  document.querySelectorAll(".error-text").forEach(e => e.innerText = "");
+}
+
+function setError(el, msg) {
+  el.classList.add("error");
+  let err = el.nextElementSibling;
+  if (!err || !err.classList.contains("error-text")) {
+    err = document.createElement("div");
+    err.className = "error-text";
+    el.after(err);
+  }
+  err.innerText = msg;
+}
+
+function generate() {
+  clearErrors();
+
+  let firstError = null;
+  let hasError = false;
+
+  const sectionName = document.getElementById("sectionName");
+  const duration = document.getElementById("sectionDuration");
+
+  if (!sectionName.value.trim()) {
+    setError(sectionName, "Required");
+    firstError = sectionName;
+    hasError = true;
+  }
+
+  if (!duration.value) {
+    setError(duration, "Required");
+    firstError = firstError || duration;
+    hasError = true;
+  }
+
   const lessons = [];
 
-  document.querySelectorAll(".lesson").forEach(lessonEl => {
-    const type = lessonEl.querySelector(".lesson-type").value;
-    const name = lessonEl.querySelector(".lesson-name").value;
+  document.querySelectorAll(".lesson").forEach(l => {
 
-    if (!validateField(type, "Type")) return;
-    if (!validateField(name, "Name")) return;
+    const type = l.querySelector(".type");
+    const name = l.querySelector(".name");
 
-    const lesson = { name, type };
-
-    if (type === "VIDEO") {
-      const videoUrl = lessonEl.querySelector(".lesson-video-url").value;
-      const thumbnailUrl = lessonEl.querySelector(".lesson-thumbnail-url").value;
-      const duration = lessonEl.querySelector(".lesson-duration").value;
-
-      const skills = Array.from(
-        lessonEl.querySelectorAll(".lesson-skill:checked")
-      ).map(el => el.value);
-
-      if (!validateField(videoUrl, "Video URL")) return;
-      if (!validateField(thumbnailUrl, "Thumbnail URL")) return;
-      if (!validateField(duration, "Duration")) return;
-
-      if (!skills.length) {
-        alert("Select at least 1 skill");
-        return;
-      }
-
-      lesson.videoUrl = videoUrl;
-      lesson.thumbnailUrl = thumbnailUrl;
-      lesson.duration = Number(duration) * 60;
-      lesson.skills = skills; // ✅ ARRAY
-
-      const resources = lessonEl.querySelector(".lesson-resources").value
-        .split("\n")
-        .map(i => i.trim())
-        .filter(Boolean);
-
-      if (resources.length) lesson.resources = resources;
+    if (!type.value) {
+      setError(type, "Required");
+      hasError = true;
+      firstError = firstError || type;
     }
 
-    if (type === "QUIZ") {
-      const ids = lessonEl.querySelector(".lesson-question-ids").value;
+    if (!name.value.trim()) {
+      setError(name, "Required");
+      hasError = true;
+      firstError = firstError || name;
+    }
 
-      if (!validateField(ids, "Question IDs")) return;
+    const lesson = {
+      name: name.value.trim(),
+      type: type.value
+    };
 
-      lesson.questionId = ids.split(",").map(i => i.trim());
+    if (type.value === "VIDEO") {
+      const video = l.querySelector(".video");
+      const thumb = l.querySelector(".thumb");
+      const dur = l.querySelector(".duration");
+
+      const skills = Array.from(l.querySelectorAll(".skill:checked"))
+        .map(s => s.value);
+
+      if (!video.value) { setError(video, "Required"); hasError = true; }
+      if (!thumb.value) { setError(thumb, "Required"); hasError = true; }
+      if (!dur.value) { setError(dur, "Required"); hasError = true; }
+      if (!skills.length) {
+        alert("Select skill");
+        hasError = true;
+      }
+
+      lesson.videoUrl = video.value;
+      lesson.thumbnailUrl = thumb.value;
+      lesson.duration = Number(dur.value) * 60;
+      lesson.skills = skills;
+
+      const res = l.querySelector(".res").value
+        .split("\n").map(i => i.trim()).filter(Boolean);
+
+      if (res.length) lesson.resources = res;
+    }
+
+    if (type.value === "QUIZ") {
+      const ids = l.querySelector(".qids");
+
+      if (!ids.value) {
+        setError(ids, "Required");
+        hasError = true;
+      }
+
+      lesson.questionId = ids.value.split(",");
     }
 
     lessons.push(lesson);
   });
 
-  const sectionName = document.getElementById("sectionName").value;
-  const duration = document.getElementById("sectionDuration").value;
-
-  if (!validateField(sectionName, "Section Name")) return;
-  if (!validateField(duration, "Section Duration")) return;
+  if (hasError) {
+    firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
 
   const result = [{
-    name: sectionName,
-    duration: Number(duration) * 60,
+    name: sectionName.value,
+    duration: Number(duration.value) * 60,
     lessons
   }];
 
@@ -299,6 +297,31 @@ function generateJSON() {
     JSON.stringify(result, null, 2);
 }
 
+function copyJSON() {
+  navigator.clipboard.writeText(
+    document.getElementById("output").textContent
+  );
+  alert("Copied!");
+}
+
+function resetAll() {
+  // clear section
+  document.getElementById("sectionName").value = "";
+  document.getElementById("sectionDuration").value = "";
+
+  const lessonsContainer = document.getElementById("lessons");
+  lessonsContainer.innerHTML = "";
+
+  lessonIndex = 0;
+
+  addLesson();
+
+  document.getElementById("output").textContent = "// JSON here";
+
+  clearErrors();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 addLesson();
 </script>
 
