@@ -15,13 +15,34 @@ body {
   background: white;
   padding: 20px;
   border-radius: 12px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.section {
+  position: relative;
+  border: 2px solid #cbd5f5;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
 .lesson {
+  position: relative;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 16px;
-  margin-bottom: 16px;
+  margin-top: 12px;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.form-group {
+  max-width: 600px;
 }
 
 label {
@@ -30,7 +51,7 @@ label {
   margin-top: 10px;
 }
 
-input, select, textarea {
+input, select {
   width: 100%;
   padding: 8px;
   border-radius: 8px;
@@ -64,17 +85,6 @@ pre {
   color: #e2e8f0;
   padding: 16px;
   border-radius: 10px;
-  white-space: pre-wrap;
-}
-
-.error {
-  border-color: red !important;
-  background: #fef2f2;
-}
-
-.error-text {
-  color: red;
-  font-size: 12px;
 }
 </style>
 </head>
@@ -85,21 +95,11 @@ pre {
 
 <h2>Course Builder</h2>
 
-<label>Section Name *</label>
-<input id="sectionName">
-<div id="err_sectionName" class="error-text"></div>
+<div id="sections"></div>
 
-<label>Section Duration (minutes) *</label>
-<input id="sectionDuration" type="number">
-<div id="err_sectionDuration" class="error-text"></div>
+<button onclick="addSection()">+ Add Section</button>
 
-<hr>
-
-<h3>Lessons</h3>
-<div id="lessons"></div>
-
-<button onclick="addLesson()">+ Add Lesson</button>
-<br>
+<br><br>
 
 <button class="primary" onclick="generate()">Generate JSON</button>
 <button class="copy" onclick="copyJSON()">Copy JSON</button>
@@ -110,34 +110,112 @@ pre {
 </div>
 
 <script>
-let lessonIndex = 0;
+let sectionId = 0;
 
-function addLesson() {
-  lessonIndex++;
+function updateSectionTitles() {
+  document.querySelectorAll(".section").forEach((sec, i) => {
+    sec.querySelector(".section-title").innerText = `Section ${i + 1}`;
+    updateLessonTitles(sec);
+    updateSectionDuration(sec);
+  });
+}
 
-  document.getElementById("lessons").innerHTML += `
-  <div class="lesson" id="lesson-${lessonIndex}">
-    <h3>Lesson ${lessonIndex}</h3>
+function updateLessonTitles(sectionEl) {
+  sectionEl.querySelectorAll(".lesson").forEach((l, i) => {
+    l.querySelector(".lesson-title").innerText = `Lesson ${i + 1}`;
+  });
+}
 
-    <label>Type *</label>
-    <select class="type" onchange="toggle(${lessonIndex})">
-      <option value="">Select</option>
-      <option value="VIDEO">VIDEO</option>
-      <option value="QUIZ">QUIZ</option>
-    </select>
+function updateSectionDuration(sectionEl) {
+  let total = 0;
 
-    <label>Name *</label>
-    <input class="name">
+  sectionEl.querySelectorAll(".lesson").forEach(l => {
+    const type = l.querySelector(".type").value;
 
-    <div id="video-${lessonIndex}" style="display:none">
+    if (type === "VIDEO") {
+      total += Number(l.querySelector(".duration").value || 0);
+    }
+
+    if (type === "QUIZ") {
+      total += Number(l.querySelector(".quiz-duration").value || 0);
+    }
+  });
+
+  sectionEl.querySelector(".section-duration").value = total;
+}
+
+function onDurationChange(input) {
+  const section = input.closest(".section");
+  updateSectionDuration(section);
+}
+
+function addSection() {
+  sectionId++;
+
+  const container = document.getElementById("sections");
+
+  container.insertAdjacentHTML("beforeend", `
+  <div class="section" id="section-${sectionId}">
+
+    <button class="danger remove-btn" onclick="removeSection(${sectionId})">
+      Remove Section
+    </button>
+
+    <h3 class="section-title"></h3>
+
+    <div class="form-group">
+      <label>Section Name *</label>
+      <input class="section-name">
+
+      <label>Section Duration (seconds)</label>
+      <input class="section-duration" type="number" readonly>
+    </div>
+
+    <h4>Lessons</h4>
+    <div class="lessons"></div>
+
+    <button onclick="addLesson(${sectionId})">+ Add Lesson</button>
+
+  </div>
+  `);
+
+  addLesson(sectionId);
+  updateSectionTitles();
+}
+
+function addLesson(sectionId) {
+  const container = document.querySelector(`#section-${sectionId} .lessons`);
+
+  container.insertAdjacentHTML("beforeend", `
+  <div class="lesson">
+
+    <button class="danger remove-btn" onclick="removeLesson(this)">
+      Remove Lesson
+    </button>
+
+    <h4 class="lesson-title"></h4>
+
+    <div class="form-group">
+      <label>Type *</label>
+      <select class="type" onchange="toggle(this)">
+        <option value="">Select</option>
+        <option value="VIDEO">VIDEO</option>
+        <option value="QUIZ">QUIZ</option>
+      </select>
+
+      <label>Name *</label>
+      <input class="name">
+    </div>
+
+    <div class="video form-group" style="display:none">
       <label>Video URL *</label>
-      <input class="video">
+      <input class="video-url">
 
       <label>Thumbnail URL *</label>
       <input class="thumb">
 
-      <label>Duration *</label>
-      <input class="duration" type="number">
+      <label>Duration (seconds) *</label>
+      <input class="duration" type="number" oninput="onDurationChange(this)">
 
       <label>Skills *</label>
       <div class="skills">
@@ -146,155 +224,101 @@ function addLesson() {
         <label><input type="checkbox" value="listening" class="skill">Listening</label>
         <label><input type="checkbox" value="reading" class="skill">Reading</label>
       </div>
-
-      <label>Resources</label>
-      <textarea class="res"></textarea>
     </div>
 
-    <div id="quiz-${lessonIndex}" style="display:none">
+    <div class="quiz form-group" style="display:none">
       <label>Question IDs *</label>
       <input class="qids">
+
+      <label>Duration (seconds) *</label>
+      <input class="quiz-duration" type="number" oninput="onDurationChange(this)">
     </div>
 
-    <button class="danger" onclick="removeLesson(${lessonIndex})">Remove</button>
   </div>
-  `;
+  `);
+
+  updateSectionTitles();
 }
 
-function toggle(i) {
-  const lesson = document.getElementById(`lesson-${i}`);
-  const type = lesson.querySelector(".type").value;
+function removeLesson(btn) {
+  const section = btn.closest(".section");
+  const container = section.querySelector(".lessons");
 
-  document.getElementById(`video-${i}`).style.display =
-    type === "VIDEO" ? "block" : "none";
-
-  document.getElementById(`quiz-${i}`).style.display =
-    type === "QUIZ" ? "block" : "none";
-}
-
-function removeLesson(i) {
-  if (document.querySelectorAll(".lesson").length <= 1) {
+  if (container.children.length <= 1) {
     alert("At least 1 lesson required");
     return;
   }
-  document.getElementById(`lesson-${i}`).remove();
+
+  btn.closest(".lesson").remove();
+  updateSectionTitles();
 }
 
-function clearErrors() {
-  document.querySelectorAll(".error").forEach(e => e.classList.remove("error"));
-  document.querySelectorAll(".error-text").forEach(e => e.innerText = "");
-}
-
-function setError(el, msg) {
-  el.classList.add("error");
-  let err = el.nextElementSibling;
-  if (!err || !err.classList.contains("error-text")) {
-    err = document.createElement("div");
-    err.className = "error-text";
-    el.after(err);
-  }
-  err.innerText = msg;
-}
-
-function generate() {
-  clearErrors();
-
-  let firstError = null;
-  let hasError = false;
-
-  const sectionName = document.getElementById("sectionName");
-  const duration = document.getElementById("sectionDuration");
-
-  if (!sectionName.value.trim()) {
-    setError(sectionName, "Required");
-    firstError = sectionName;
-    hasError = true;
-  }
-
-  if (!duration.value) {
-    setError(duration, "Required");
-    firstError = firstError || duration;
-    hasError = true;
-  }
-
-  const lessons = [];
-
-  document.querySelectorAll(".lesson").forEach(l => {
-
-    const type = l.querySelector(".type");
-    const name = l.querySelector(".name");
-
-    if (!type.value) {
-      setError(type, "Required");
-      hasError = true;
-      firstError = firstError || type;
-    }
-
-    if (!name.value.trim()) {
-      setError(name, "Required");
-      hasError = true;
-      firstError = firstError || name;
-    }
-
-    const lesson = {
-      name: name.value.trim(),
-      type: type.value
-    };
-
-    if (type.value === "VIDEO") {
-      const video = l.querySelector(".video");
-      const thumb = l.querySelector(".thumb");
-      const dur = l.querySelector(".duration");
-
-      const skills = Array.from(l.querySelectorAll(".skill:checked"))
-        .map(s => s.value);
-
-      if (!video.value) { setError(video, "Required"); hasError = true; }
-      if (!thumb.value) { setError(thumb, "Required"); hasError = true; }
-      if (!dur.value) { setError(dur, "Required"); hasError = true; }
-      if (!skills.length) {
-        alert("Select skill");
-        hasError = true;
-      }
-
-      lesson.videoUrl = video.value;
-      lesson.thumbnailUrl = thumb.value;
-      lesson.duration = Number(dur.value) * 60;
-      lesson.skills = skills;
-
-      const res = l.querySelector(".res").value
-        .split("\n").map(i => i.trim()).filter(Boolean);
-
-      if (res.length) lesson.resources = res;
-    }
-
-    if (type.value === "QUIZ") {
-      const ids = l.querySelector(".qids");
-
-      if (!ids.value) {
-        setError(ids, "Required");
-        hasError = true;
-      }
-
-      lesson.questionId = ids.value.split(",");
-    }
-
-    lessons.push(lesson);
-  });
-
-  if (hasError) {
-    firstError?.scrollIntoView({ behavior: "smooth", block: "center" });
+function removeSection(id) {
+  if (document.querySelectorAll(".section").length <= 1) {
+    alert("At least 1 section required");
     return;
   }
 
-  const result = [{
-    name: sectionName.value,
-    duration: Number(duration.value) * 60,
-    lessons
-  }];
+  document.getElementById(`section-${id}`).remove();
+  updateSectionTitles();
+}
+
+function toggle(select) {
+  const lesson = select.closest(".lesson");
+
+  lesson.querySelector(".video").style.display =
+    select.value === "VIDEO" ? "block" : "none";
+
+  lesson.querySelector(".quiz").style.display =
+    select.value === "QUIZ" ? "block" : "none";
+
+  const section = select.closest(".section");
+  updateSectionDuration(section);
+}
+
+function generate() {
+  const sections = [];
+
+  document.querySelectorAll(".section").forEach(sec => {
+    const name = sec.querySelector(".section-name").value;
+    const duration = sec.querySelector(".section-duration").value;
+
+    const lessons = [];
+
+    sec.querySelectorAll(".lesson").forEach(l => {
+      const type = l.querySelector(".type").value;
+
+      const lesson = {
+        name: l.querySelector(".name").value,
+        type
+      };
+
+      if (type === "VIDEO") {
+        lesson.videoUrl = l.querySelector(".video-url").value;
+        lesson.thumbnailUrl = l.querySelector(".thumb").value;
+        lesson.duration = Number(l.querySelector(".duration").value);
+        lesson.skills = Array.from(l.querySelectorAll(".skill:checked")).map(s => s.value);
+      }
+
+      if (type === "QUIZ") {
+        lesson.questionId = l.querySelector(".qids").value
+          .split(",")
+          .map(i => i.trim()); 
+        lesson.duration = Number(l.querySelector(".quiz-duration").value);
+      }
+
+      lessons.push(lesson);
+    });
+
+    sections.push({
+      name,
+      duration: Number(duration),
+      lessons
+    });
+  });
 
   document.getElementById("output").textContent =
-    JSON.stringify(result, null, 2);
+    JSON.stringify(sections, null, 2);
 }
 
 function copyJSON() {
@@ -305,24 +329,13 @@ function copyJSON() {
 }
 
 function resetAll() {
-  // clear section
-  document.getElementById("sectionName").value = "";
-  document.getElementById("sectionDuration").value = "";
-
-  const lessonsContainer = document.getElementById("lessons");
-  lessonsContainer.innerHTML = "";
-
-  lessonIndex = 0;
-
-  addLesson();
-
+  document.getElementById("sections").innerHTML = "";
+  sectionId = 0;
+  addSection();
   document.getElementById("output").textContent = "// JSON here";
-
-  clearErrors();
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-addLesson();
+
+addSection();
 </script>
 
 </body>
